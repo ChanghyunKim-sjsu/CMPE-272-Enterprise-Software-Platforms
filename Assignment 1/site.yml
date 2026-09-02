@@ -1,0 +1,65 @@
+---
+- name: Deploy web servers
+  hosts: webservers
+  become: true
+  tags:
+    - deploy
+
+  tasks:
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Deploy custom web page
+      ansible.builtin.template:
+        src: templates/index.html.j2
+        dest: /var/www/html/index.html
+        mode: "0644"
+
+    - name: Configure Nginx on port 8080
+      ansible.builtin.template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/sites-available/default
+        mode: "0644"
+      notify:
+        - Restart Nginx
+
+    - name: Start and enable Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+  handlers:
+    - name: Restart Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+
+
+- name: Undeploy web servers
+  hosts: webservers
+  become: true
+  tags:
+    - undeploy
+
+  tasks:
+    - name: Stop Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: stopped
+        enabled: false
+      ignore_errors: true
+
+    - name: Remove custom web page
+      ansible.builtin.file:
+        path: /var/www/html/index.html
+        state: absent
+
+    - name: Remove Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: absent
+        purge: true
