@@ -155,20 +155,37 @@ async def create_issue(
     return response.json()
 
 
-async def get_issue(number: int):
-    """Return a single GitHub issue by issue number."""
+async def get_issue(
+    number: int,
+    if_none_match: str | None = None,
+):
+    """Return a single GitHub issue with ETag metadata."""
 
     url = f"{GITHUB_API_BASE_URL}/issues/{number}"
+
+    headers = get_headers()
+
+    if if_none_match:
+        headers["If-None-Match"] = if_none_match
 
     async with httpx.AsyncClient() as client:
         response = await client.get(
             url,
-            headers=get_headers(),
+            headers=headers,
         )
+
+    # A conditional request can legitimately return 304.
+    # It must not be treated as a GitHub API error.
+    if response.status_code == 304:
+        return None, response.headers.get("ETag"), True
 
     handle_github_error(response)
 
-    return response.json()
+    return (
+        response.json(),
+        response.headers.get("ETag"),
+        False,
+    )
 
 
 async def update_issue(

@@ -83,11 +83,14 @@ def test_list_issues_route_forwards_link_header(monkeypatch):
     assert 'rel="next"' in response.headers["Link"]
 
 
-def test_get_single_issue_route(monkeypatch):
-    """GET /issues/{number} should return one issue."""
+def test_get_single_issue_route_returns_etag(monkeypatch):
+    """GET /issues/{number} should return HTTP 200 with an ETag."""
 
-    async def mock_get_issue(number):
-        return MOCK_ISSUE
+    async def mock_get_issue(number, if_none_match=None):
+        assert number == 10
+        assert if_none_match is None
+
+        return MOCK_ISSUE, '"etag-v1"', False
 
     monkeypatch.setattr(
         issues_router,
@@ -98,6 +101,66 @@ def test_get_single_issue_route(monkeypatch):
     response = client.get("/issues/10")
 
     assert response.status_code == 200
+    assert response.headers["ETag"] == '"etag-v1"'
+    assert response.json()["number"] == 10
+    assert response.json()["title"] == "Mock Issue"
+
+
+def test_get_single_issue_route_returns_304_for_matching_etag(
+    monkeypatch,
+):
+    """Matching If-None-Match should return HTTP 304 with no body."""
+
+    async def mock_get_issue(number, if_none_match=None):
+        assert number == 10
+        assert if_none_match == '"etag-v1"'
+
+        return None, '"etag-v1"', True
+
+    monkeypatch.setattr(
+        issues_router,
+        "get_issue",
+        mock_get_issue,
+    )
+
+    response = client.get(
+        "/issues/10",
+        headers={
+            "If-None-Match": '"etag-v1"',
+        },
+    )
+
+    assert response.status_code == 304
+    assert response.headers["ETag"] == '"etag-v1"'
+    assert response.content == b""
+
+
+def test_get_single_issue_route_returns_200_for_different_etag(
+    monkeypatch,
+):
+    """A stale ETag should return HTTP 200 with the current issue."""
+
+    async def mock_get_issue(number, if_none_match=None):
+        assert number == 10
+        assert if_none_match == '"old-etag"'
+
+        return MOCK_ISSUE, '"etag-v2"', False
+
+    monkeypatch.setattr(
+        issues_router,
+        "get_issue",
+        mock_get_issue,
+    )
+
+    response = client.get(
+        "/issues/10",
+        headers={
+            "If-None-Match": '"old-etag"',
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["ETag"] == '"etag-v2"'
     assert response.json()["number"] == 10
     assert response.json()["title"] == "Mock Issue"
 

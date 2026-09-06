@@ -6,7 +6,7 @@ paths:
   /issues/{number}:
     get:
       summary: Get Issue Endpoint
-      description: Return a single issue by issue number.
+      description: Return a single issue by issue number with ETag support.
       operationId: get_issue
       parameters:
       - name: number
@@ -15,6 +15,14 @@ paths:
         schema:
           type: integer
           title: Number
+      - name: If-None-Match
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: If-None-Match
       responses:
         '200':
           description: Issue returned successfully
@@ -32,6 +40,18 @@ paths:
                 - bug
                 created_at: '2026-09-05T20:15:00Z'
                 updated_at: '2026-09-05T20:15:00Z'
+          headers:
+            ETag:
+              description: Entity tag returned by GitHub
+              schema:
+                type: string
+        '304':
+          description: Issue has not changed
+          headers:
+            ETag:
+              description: Current entity tag
+              schema:
+                type: string
         '400':
           description: Invalid issue number
           content:

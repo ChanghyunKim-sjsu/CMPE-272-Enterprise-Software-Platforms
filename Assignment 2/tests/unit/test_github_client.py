@@ -97,21 +97,28 @@ def test_create_issue_success(httpx_mock):
 
 
 def test_get_issue_success(httpx_mock):
-    """Retrieving one issue should return GitHub issue data."""
+    """get_issue should return issue data and ETag metadata."""
 
     httpx_mock.add_response(
         method="GET",
         url=f"{GITHUB_BASE_URL}/issues/10",
         status_code=200,
+        headers={
+            "ETag": '"etag-v1"',
+        },
         json={
             "number": 10,
-            "title": "Retrieved Issue",
+            "title": "Test issue",
+            "state": "open",
         },
     )
 
-    issue = asyncio.run(github_client.get_issue(10))
+    issue, etag, not_modified = asyncio.run(github_client.get_issue(10))
 
     assert issue["number"] == 10
+    assert issue["title"] == "Test issue"
+    assert etag == '"etag-v1"'
+    assert not_modified is False
 
 
 def test_update_issue_success(httpx_mock):
@@ -217,3 +224,34 @@ def test_github_500_maps_to_502():
         github_client.handle_github_error(response)
 
     assert exc_info.value.status_code == 502
+
+
+def test_get_issue_forwards_if_none_match_and_handles_304(
+    httpx_mock,
+):
+    """get_issue should forward If-None-Match and handle HTTP 304."""
+
+    etag = '"etag-v1"'
+
+    httpx_mock.add_response(
+        method="GET",
+        url=f"{GITHUB_BASE_URL}/issues/10",
+        status_code=304,
+        headers={
+            "ETag": etag,
+        },
+        match_headers={
+            "If-None-Match": etag,
+        },
+    )
+
+    issue, returned_etag, not_modified = asyncio.run(
+        github_client.get_issue(
+            10,
+            if_none_match=etag,
+        )
+    )
+
+    assert issue is None
+    assert returned_etag == etag
+    assert not_modified is True

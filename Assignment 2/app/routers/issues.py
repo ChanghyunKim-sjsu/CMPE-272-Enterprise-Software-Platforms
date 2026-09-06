@@ -9,7 +9,7 @@ Description: Provides HTTP endpoints for GitHub issue operations.
 
 from typing import Literal
 
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Header, Query, Response, status
 
 from app.github_client import (
     create_comment,
@@ -109,10 +109,29 @@ def error_response(description: str, example: dict) -> dict:
     responses={
         200: {
             "description": "Issue returned successfully",
+            "headers": {
+                "ETag": {
+                    "description": "Entity tag returned by GitHub",
+                    "schema": {
+                        "type": "string",
+                    },
+                },
+            },
             "content": {
                 "application/json": {
                     "example": ISSUE_EXAMPLE,
                 }
+            },
+        },
+        304: {
+            "description": "Issue has not changed",
+            "headers": {
+                "ETag": {
+                    "description": "Current entity tag",
+                    "schema": {
+                        "type": "string",
+                    },
+                },
             },
         },
         400: error_response(
@@ -133,10 +152,34 @@ def error_response(description: str, example: dict) -> dict:
         ),
     },
 )
-async def get_issue_endpoint(number: int):
-    """Return a single issue by issue number."""
+async def get_issue_endpoint(
+    number: int,
+    response: Response,
+    if_none_match: str | None = Header(
+        default=None,
+        alias="If-None-Match",
+    ),
+):
+    """Return a single issue by issue number with ETag support."""
 
-    issue = await get_issue(number)
+    issue, etag, not_modified = await get_issue(
+        number,
+        if_none_match=if_none_match,
+    )
+
+    if not_modified:
+        headers = {}
+
+        if etag:
+            headers["ETag"] = etag
+
+        return Response(
+            status_code=status.HTTP_304_NOT_MODIFIED,
+            headers=headers,
+        )
+
+    if etag:
+        response.headers["ETag"] = etag
 
     return {
         "number": issue["number"],
