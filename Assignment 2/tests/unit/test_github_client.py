@@ -16,7 +16,6 @@ import pytest
 import app.github_client as github_client
 from app.errors import GitHubAPIError
 
-
 GITHUB_BASE_URL = github_client.GITHUB_API_BASE_URL
 
 
@@ -48,9 +47,7 @@ def test_list_issues_returns_data_and_link_header(httpx_mock):
 
     httpx_mock.add_response(
         method="GET",
-        url=re.compile(
-            rf"{re.escape(GITHUB_BASE_URL)}/issues\?.*"
-        ),
+        url=re.compile(rf"{re.escape(GITHUB_BASE_URL)}/issues\?.*"),
         status_code=200,
         json=[
             {
@@ -58,12 +55,7 @@ def test_list_issues_returns_data_and_link_header(httpx_mock):
                 "title": "Mock Issue",
             }
         ],
-        headers={
-            "Link": (
-                '<https://api.github.com/test/issues?page=2>; '
-                'rel="next"'
-            )
-        },
+        headers={"Link": ('<https://api.github.com/test/issues?page=2>; rel="next"')},
     )
 
     issues, link_header = asyncio.run(
@@ -117,9 +109,7 @@ def test_get_issue_success(httpx_mock):
         },
     )
 
-    issue = asyncio.run(
-        github_client.get_issue(10)
-    )
+    issue = asyncio.run(github_client.get_issue(10))
 
     assert issue["number"] == 10
 
@@ -190,9 +180,7 @@ def test_list_comments_success(httpx_mock):
         ],
     )
 
-    comments = asyncio.run(
-        github_client.list_comments(10)
-    )
+    comments = asyncio.run(github_client.list_comments(10))
 
     assert len(comments) == 1
     assert comments[0]["id"] == 500

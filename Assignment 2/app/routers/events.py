@@ -12,7 +12,6 @@ from fastapi import APIRouter, Query
 from app.event_store import list_events
 from app.schemas import ErrorResponse, WebhookEventResponse
 
-
 router = APIRouter()
 
 

@@ -12,7 +12,6 @@ from fastapi.testclient import TestClient
 import app.routers.issues as issues_router
 from app.main import app
 
-
 client = TestClient(app)
 
 
@@ -77,9 +76,7 @@ def test_list_issues_route_forwards_link_header(monkeypatch):
         mock_list_issues,
     )
 
-    response = client.get(
-        "/issues?state=open&page=1&per_page=1"
-    )
+    response = client.get("/issues?state=open&page=1&per_page=1")
 
     assert response.status_code == 200
     assert len(response.json()) == 1
@@ -152,9 +149,7 @@ def test_create_comment_route(monkeypatch):
                 "login": "test-user",
             },
             "created_at": "2026-09-05T20:00:00Z",
-            "html_url": (
-                "https://github.com/test/issues/10#issuecomment-500"
-            ),
+            "html_url": ("https://github.com/test/issues/10#issuecomment-500"),
         }
 
     monkeypatch.setattr(
@@ -187,9 +182,7 @@ def test_list_comments_route(monkeypatch):
                     "login": "test-user",
                 },
                 "created_at": "2026-09-05T20:00:00Z",
-                "html_url": (
-                    "https://github.com/test/issues/10#issuecomment-500"
-                ),
+                "html_url": ("https://github.com/test/issues/10#issuecomment-500"),
             }
         ]
 

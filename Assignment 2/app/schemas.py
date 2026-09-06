@@ -94,9 +94,7 @@ class CommentCreate(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {
-                    "body": "This comment was created through the Issues Gateway."
-                }
+                {"body": "This comment was created through the Issues Gateway."}
             ]
         }
     )

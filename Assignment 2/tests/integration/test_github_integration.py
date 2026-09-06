@@ -15,7 +15,6 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
-
 client = TestClient(app)
 
 
@@ -46,9 +45,7 @@ def test_github_issue_lifecycle():
 
     try:
         # Read the newly created issue.
-        get_response = client.get(
-            f"/issues/{issue_number}"
-        )
+        get_response = client.get(f"/issues/{issue_number}")
 
         assert get_response.status_code == 200
         assert get_response.json()["number"] == issue_number
@@ -100,16 +97,11 @@ def test_github_issue_lifecycle():
         comment_id = comment_response.json()["id"]
 
         # Fetch comments and verify the new comment exists.
-        comments_response = client.get(
-            f"/issues/{issue_number}/comments"
-        )
+        comments_response = client.get(f"/issues/{issue_number}/comments")
 
         assert comments_response.status_code == 200
 
-        comment_ids = [
-            comment["id"]
-            for comment in comments_response.json()
-        ]
+        comment_ids = [comment["id"] for comment in comments_response.json()]
 
         assert comment_id in comment_ids
 

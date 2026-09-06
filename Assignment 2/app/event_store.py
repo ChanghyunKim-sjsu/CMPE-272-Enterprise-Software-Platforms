@@ -8,9 +8,8 @@ Description: Stores processed GitHub webhook deliveries in SQLite.
 """
 
 import sqlite3
-from datetime import datetime, timezone
 from contextlib import closing
-
+from datetime import datetime, timezone
 
 DATABASE_PATH = "webhook_events.db"
 

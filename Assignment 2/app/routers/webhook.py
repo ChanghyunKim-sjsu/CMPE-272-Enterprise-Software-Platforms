@@ -16,7 +16,6 @@ from app.event_store import save_event
 from app.schemas import ErrorResponse
 from app.webhook import verify_webhook_signature
 
-
 router = APIRouter()
 
 ALLOWED_EVENTS = {"issues", "issue_comment", "ping"}
@@ -54,9 +53,7 @@ ALLOWED_ACTIONS = {
     operation_id="receive_github_webhook",
     responses={
         204: {
-            "description": (
-                "Webhook delivery accepted and processed successfully"
-            ),
+            "description": ("Webhook delivery accepted and processed successfully"),
         },
         400: {
             "model": ErrorResponse,
@@ -68,9 +65,7 @@ ALLOWED_ACTIONS = {
                             "summary": "Unsupported GitHub event",
                             "value": {
                                 "error": "unsupported_event",
-                                "message": (
-                                    "Unsupported GitHub webhook event."
-                                ),
+                                "message": ("Unsupported GitHub webhook event."),
                                 "status_code": 400,
                             },
                         },
@@ -78,9 +73,7 @@ ALLOWED_ACTIONS = {
                             "summary": "Invalid JSON payload",
                             "value": {
                                 "error": "invalid_payload",
-                                "message": (
-                                    "Webhook payload is not valid JSON."
-                                ),
+                                "message": ("Webhook payload is not valid JSON."),
                                 "status_code": 400,
                             },
                         },
@@ -89,8 +82,7 @@ ALLOWED_ACTIONS = {
                             "value": {
                                 "error": "unsupported_action",
                                 "message": (
-                                    "Unsupported action 'unknown' "
-                                    "for event 'issues'."
+                                    "Unsupported action 'unknown' for event 'issues'."
                                 ),
                                 "status_code": 400,
                             },
@@ -99,9 +91,7 @@ ALLOWED_ACTIONS = {
                             "summary": "Missing delivery ID",
                             "value": {
                                 "error": "missing_delivery_id",
-                                "message": (
-                                    "X-GitHub-Delivery header is required."
-                                ),
+                                "message": ("X-GitHub-Delivery header is required."),
                                 "status_code": 400,
                             },
                         },
@@ -116,9 +106,7 @@ ALLOWED_ACTIONS = {
                 "application/json": {
                     "example": {
                         "error": "invalid_signature",
-                        "message": (
-                            "Webhook signature validation failed."
-                        ),
+                        "message": ("Webhook signature validation failed."),
                         "status_code": 401,
                     }
                 }
@@ -132,8 +120,7 @@ ALLOWED_ACTIONS = {
                 "in": "header",
                 "required": True,
                 "description": (
-                    "GitHub HMAC SHA-256 signature used to verify "
-                    "the webhook payload."
+                    "GitHub HMAC SHA-256 signature used to verify the webhook payload."
                 ),
                 "schema": {
                     "type": "string",
@@ -145,8 +132,7 @@ ALLOWED_ACTIONS = {
                 "in": "header",
                 "required": True,
                 "description": (
-                    "GitHub webhook event type, such as issues, "
-                    "issue_comment, or ping."
+                    "GitHub webhook event type, such as issues, issue_comment, or ping."
                 ),
                 "schema": {
                     "type": "string",
@@ -233,10 +219,7 @@ async def github_webhook(request: Request):
             status_code=400,
             content={
                 "error": "unsupported_action",
-                "message": (
-                    f"Unsupported action '{action}' "
-                    f"for event '{event}'."
-                ),
+                "message": (f"Unsupported action '{action}' for event '{event}'."),
                 "status_code": 400,
             },
         )

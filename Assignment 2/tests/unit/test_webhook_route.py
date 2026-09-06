@@ -16,18 +16,20 @@ from fastapi.testclient import TestClient
 from app.config import WEBHOOK_SECRET
 from app.main import app
 
-
 client = TestClient(app)
 
 
 def make_signature(body: bytes) -> str:
     """Create a valid HMAC SHA-256 signature for a webhook payload."""
 
-    return "sha256=" + hmac.new(
-        WEBHOOK_SECRET.encode("utf-8"),
-        body,
-        hashlib.sha256,
-    ).hexdigest()
+    return (
+        "sha256="
+        + hmac.new(
+            WEBHOOK_SECRET.encode("utf-8"),
+            body,
+            hashlib.sha256,
+        ).hexdigest()
+    )
 
 
 def test_webhook_rejects_invalid_signature():

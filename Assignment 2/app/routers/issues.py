@@ -37,10 +37,7 @@ router = APIRouter()
 
 ISSUE_EXAMPLE = {
     "number": 4,
-    "html_url": (
-        "https://github.com/"
-        "ChanghyunKim-sjsu/CMPE-272-issues-test/issues/4"
-    ),
+    "html_url": ("https://github.com/ChanghyunKim-sjsu/CMPE-272-issues-test/issues/4"),
     "state": "open",
     "title": "Example issue",
     "body": "Created through the CMPE 272 Issues Gateway.",
@@ -104,6 +101,7 @@ def error_response(description: str, example: dict) -> dict:
 # Issue endpoints
 # ---------------------------------------------------------------------------
 
+
 @router.get(
     "/issues/{number}",
     response_model=IssueResponse,
@@ -146,10 +144,7 @@ async def get_issue_endpoint(number: int):
         "state": issue["state"],
         "title": issue["title"],
         "body": issue["body"],
-        "labels": [
-            label["name"]
-            for label in issue.get("labels", [])
-        ],
+        "labels": [label["name"] for label in issue.get("labels", [])],
         "created_at": issue["created_at"],
         "updated_at": issue["updated_at"],
     }
@@ -222,10 +217,7 @@ async def list_issues_endpoint(
             "state": issue["state"],
             "title": issue["title"],
             "body": issue["body"],
-            "labels": [
-                label["name"]
-                for label in issue.get("labels", [])
-            ],
+            "labels": [label["name"] for label in issue.get("labels", [])],
             "created_at": issue["created_at"],
             "updated_at": issue["updated_at"],
         }
@@ -282,9 +274,7 @@ async def create_issue_endpoint(
         labels=payload.labels,
     )
 
-    response.headers["Location"] = (
-        f"/issues/{github_issue['number']}"
-    )
+    response.headers["Location"] = f"/issues/{github_issue['number']}"
 
     return {
         "number": github_issue["number"],
@@ -292,10 +282,7 @@ async def create_issue_endpoint(
         "state": github_issue["state"],
         "title": github_issue["title"],
         "body": github_issue["body"],
-        "labels": [
-            label["name"]
-            for label in github_issue.get("labels", [])
-        ],
+        "labels": [label["name"] for label in github_issue.get("labels", [])],
         "created_at": github_issue["created_at"],
         "updated_at": github_issue["updated_at"],
     }
@@ -351,10 +338,7 @@ async def update_issue_endpoint(
         "state": issue["state"],
         "title": issue["title"],
         "body": issue["body"],
-        "labels": [
-            label["name"]
-            for label in issue.get("labels", [])
-        ],
+        "labels": [label["name"] for label in issue.get("labels", [])],
         "created_at": issue["created_at"],
         "updated_at": issue["updated_at"],
     }
@@ -363,6 +347,7 @@ async def update_issue_endpoint(
 # ---------------------------------------------------------------------------
 # Comment endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.post(
     "/issues/{number}/comments",

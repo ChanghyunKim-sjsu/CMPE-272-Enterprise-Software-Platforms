@@ -7,15 +7,14 @@ Component: GitHub REST API Client
 Description: Handles communication with the GitHub REST API.
 """
 
-import httpx
 import time
 
-from app.config import GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO
+import httpx
+
+from app.config import GITHUB_OWNER, GITHUB_REPO, GITHUB_TOKEN
 from app.errors import GitHubAPIError
 
-GITHUB_API_BASE_URL = (
-    f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}"
-)
+GITHUB_API_BASE_URL = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}"
 
 
 def get_headers():
@@ -29,6 +28,7 @@ def get_headers():
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
+
 
 def handle_github_error(response: httpx.Response):
     """Convert GitHub API errors into application exceptions."""
@@ -50,8 +50,7 @@ def handle_github_error(response: httpx.Response):
     remaining = response.headers.get("X-RateLimit-Remaining")
 
     if response.status_code == 429 or (
-        response.status_code == 403
-        and remaining == "0"
+        response.status_code == 403 and remaining == "0"
     ):
         status_code = 429
 
@@ -93,6 +92,7 @@ def handle_github_error(response: httpx.Response):
         headers=error_headers,
     )
 
+
 async def list_issues(
     state: str = "open",
     labels: str | None = None,
@@ -122,6 +122,7 @@ async def list_issues(
     handle_github_error(response)
 
     return response.json(), response.headers.get("Link")
+
 
 async def create_issue(
     title: str,
@@ -153,6 +154,7 @@ async def create_issue(
 
     return response.json()
 
+
 async def get_issue(number: int):
     """Return a single GitHub issue by issue number."""
 
@@ -167,6 +169,7 @@ async def get_issue(number: int):
     handle_github_error(response)
 
     return response.json()
+
 
 async def update_issue(
     number: int,
@@ -200,6 +203,7 @@ async def update_issue(
 
     return response.json()
 
+
 async def create_comment(number: int, body: str):
     """Create a comment on an existing GitHub issue."""
 
@@ -219,6 +223,7 @@ async def create_comment(number: int, body: str):
     handle_github_error(response)
 
     return response.json()
+
 
 async def list_comments(number: int):
     """Return comments for an existing GitHub issue."""

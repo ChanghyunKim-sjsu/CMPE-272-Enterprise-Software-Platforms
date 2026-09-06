@@ -12,12 +12,9 @@ from fastapi.testclient import TestClient
 from app.config import GITHUB_OWNER, GITHUB_REPO
 from app.main import app
 
-
 client = TestClient(app)
 
-GITHUB_BASE_URL = (
-    f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}"
-)
+GITHUB_BASE_URL = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}"
 
 
 def test_github_401_maps_to_gateway_401(httpx_mock):
@@ -87,6 +84,7 @@ def test_github_404_maps_to_gateway_404(httpx_mock):
     assert data["error"] == "github_api_error"
     assert data["message"] == "Not Found"
     assert data["status_code"] == 404
+
 
 def test_github_rate_limit_maps_to_429(httpx_mock):
     """GitHub rate limiting should return 429 with Retry-After."""

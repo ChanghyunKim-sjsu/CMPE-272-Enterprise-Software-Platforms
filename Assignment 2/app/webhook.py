@@ -22,11 +22,14 @@ def verify_webhook_signature(
     if not WEBHOOK_SECRET or not signature:
         return False
 
-    expected_signature = "sha256=" + hmac.new(
-        WEBHOOK_SECRET.encode("utf-8"),
-        body,
-        hashlib.sha256,
-    ).hexdigest()
+    expected_signature = (
+        "sha256="
+        + hmac.new(
+            WEBHOOK_SECRET.encode("utf-8"),
+            body,
+            hashlib.sha256,
+        ).hexdigest()
+    )
 
     return hmac.compare_digest(
         expected_signature,

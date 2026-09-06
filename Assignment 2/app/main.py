@@ -13,16 +13,14 @@ import time
 import uuid
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from app.errors import GitHubAPIError
-
+from app.event_store import initialize_database
+from app.routers.events import router as events_router
 from app.routers.issues import router as issues_router
 from app.routers.webhook import router as webhook_router
-from app.routers.events import router as events_router
-
-from app.event_store import initialize_database
 
 logger = logging.getLogger("issues_gateway")
 
@@ -36,6 +34,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
 @app.middleware("http")
 async def request_logging_middleware(
     request: Request,
@@ -46,14 +45,9 @@ async def request_logging_middleware(
     Author: Changhyun Kim
     """
 
-    request_id = (
-        request.headers.get("X-Request-ID")
-        or str(uuid.uuid4())
-    )
+    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
 
-    github_delivery_id = request.headers.get(
-        "X-GitHub-Delivery"
-    )
+    github_delivery_id = request.headers.get("X-GitHub-Delivery")
 
     start_time = time.perf_counter()
 
@@ -82,6 +76,7 @@ async def request_logging_middleware(
 
     return response
 
+
 initialize_database()
 
 app.include_router(issues_router)
@@ -106,6 +101,7 @@ async def github_api_error_handler(
         },
     )
 
+
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(
     request: Request,
@@ -128,6 +124,7 @@ async def validation_error_handler(
             "status_code": 400,
         },
     )
+
 
 @app.get(
     "/healthz",
@@ -182,11 +179,7 @@ def custom_openapi():
             responses = operation.get("responses", {})
             responses.pop("422", None)
 
-    schemas = (
-        openapi_schema
-        .get("components", {})
-        .get("schemas", {})
-    )
+    schemas = openapi_schema.get("components", {}).get("schemas", {})
 
     schemas.pop("HTTPValidationError", None)
     schemas.pop("ValidationError", None)

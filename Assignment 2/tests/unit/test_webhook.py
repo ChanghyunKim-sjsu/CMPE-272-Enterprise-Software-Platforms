@@ -17,11 +17,14 @@ from app.webhook import verify_webhook_signature
 def make_signature(body: bytes) -> str:
     """Create a valid test signature using the configured webhook secret."""
 
-    return "sha256=" + hmac.new(
-        WEBHOOK_SECRET.encode("utf-8"),
-        body,
-        hashlib.sha256,
-    ).hexdigest()
+    return (
+        "sha256="
+        + hmac.new(
+            WEBHOOK_SECRET.encode("utf-8"),
+            body,
+            hashlib.sha256,
+        ).hexdigest()
+    )
 
 
 def test_valid_webhook_signature_returns_true():
@@ -38,10 +41,13 @@ def test_invalid_webhook_signature_returns_false():
 
     body = b'{"action":"opened"}'
 
-    assert verify_webhook_signature(
-        body,
-        "sha256=invalid",
-    ) is False
+    assert (
+        verify_webhook_signature(
+            body,
+            "sha256=invalid",
+        )
+        is False
+    )
 
 
 def test_tampered_webhook_body_returns_false():
@@ -52,7 +58,10 @@ def test_tampered_webhook_body_returns_false():
 
     signature = make_signature(original_body)
 
-    assert verify_webhook_signature(
-        tampered_body,
-        signature,
-    ) is False
+    assert (
+        verify_webhook_signature(
+            tampered_body,
+            signature,
+        )
+        is False
+    )
