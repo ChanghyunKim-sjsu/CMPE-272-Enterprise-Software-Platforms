@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Lint, Test, OpenAPI, Docker
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_TOKEN: test-token
+      GITHUB_OWNER: test-owner
+      GITHUB_REPO: test-repo
+      WEBHOOK_SECRET: test-secret
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make install
+
+      - name: Run Ruff lint and format checks
+        run: make lint
+
+      - name: Run unit tests
+        run: make test
+
+      - name: Run coverage
+        run: make coverage
+
+      - name: Generate OpenAPI contract
+        run: make openapi
+
+      - name: Verify OpenAPI contract
+        run: |
+          python - <<'PY'
+          import yaml
+          from app.main import app
+
+          runtime_schema = app.openapi()
+
+          with open("openapi.yaml", encoding="utf-8") as file:
+              static_schema = yaml.safe_load(file)
+
+          assert runtime_schema == static_schema, (
+              "Runtime OpenAPI and openapi.yaml do not match"
+          )
+
+          operation_ids = []
+
+          for path_item in runtime_schema["paths"].values():
+              for operation in path_item.values():
+                  if (
+                      isinstance(operation, dict)
+                      and "operationId" in operation
+                  ):
+                      operation_ids.append(operation["operationId"])
+
+          assert len(operation_ids) == len(set(operation_ids)), (
+              "Duplicate OpenAPI operation IDs found"
+          )
+
+          for path_item in runtime_schema["paths"].values():
+              for operation in path_item.values():
+                  if not isinstance(operation, dict):
+                      continue
+
+                  responses = operation.get("responses", {})
+                  assert "422" not in responses, (
+                      "Unexpected FastAPI 422 response found"
+                  )
+
+          print("Runtime OpenAPI matches openapi.yaml")
+          print("Operation IDs are unique")
+          print("No automatic 422 responses found")
+          PY
+
+      - name: Verify committed OpenAPI YAML is current
+        run: git diff --exit-code -- openapi.yaml
+
+      - name: Build Docker image
+        run: make docker-build

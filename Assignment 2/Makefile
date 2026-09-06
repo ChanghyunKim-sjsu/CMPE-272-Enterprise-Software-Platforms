@@ -12,7 +12,7 @@ test:
 	$(PYTHON) -m pytest tests/unit -q
 
 coverage:
-	$(PYTHON) -m pytest tests/unit --cov=app --cov-report=term-missing
+	$(PYTHON) -m pytest tests/unit --cov=app --cov-report=term-missing --cov-fail-under=80
 
 lint:
 	ruff check app tests
