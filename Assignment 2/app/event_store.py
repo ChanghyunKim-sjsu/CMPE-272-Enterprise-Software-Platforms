@@ -17,20 +17,21 @@ DATABASE_PATH = "webhook_events.db"
 def initialize_database():
     """Create the webhook event table if it does not already exist."""
 
-    with sqlite3.connect(DATABASE_PATH) as connection:
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS webhook_events (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                delivery_id TEXT NOT NULL,
-                event TEXT NOT NULL,
-                action TEXT NOT NULL,
-                issue_number INTEGER,
-                timestamp TEXT NOT NULL,
-                UNIQUE(delivery_id, action)
+    with closing(sqlite3.connect(DATABASE_PATH)) as connection:
+        with connection:
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS webhook_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    delivery_id TEXT NOT NULL,
+                    event TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    issue_number INTEGER,
+                    timestamp TEXT NOT NULL,
+                    UNIQUE(delivery_id, action)
+                )
+                """
             )
-            """
-        )
 
 
 def save_event(
@@ -48,26 +49,27 @@ def save_event(
     timestamp = datetime.now(timezone.utc).isoformat()
 
     try:
-        with sqlite3.connect(DATABASE_PATH) as connection:
-            connection.execute(
-                """
-                INSERT INTO webhook_events (
-                    delivery_id,
-                    event,
-                    action,
-                    issue_number,
-                    timestamp
+        with closing(sqlite3.connect(DATABASE_PATH)) as connection:
+            with connection:
+                connection.execute(
+                    """
+                    INSERT INTO webhook_events (
+                        delivery_id,
+                        event,
+                        action,
+                        issue_number,
+                        timestamp
+                    )
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (
+                        delivery_id,
+                        event,
+                        action,
+                        issue_number,
+                        timestamp,
+                    ),
                 )
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                (
-                    delivery_id,
-                    event,
-                    action,
-                    issue_number,
-                    timestamp,
-                ),
-            )
 
         return True
 
