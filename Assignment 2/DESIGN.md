@@ -100,6 +100,8 @@ The `/events` endpoint exposes recently processed webhook deliveries for debuggi
 
 SQLite was selected because the assignment allows a local persistence mechanism and the service runs as a single-instance development application.
 
+Each database operation opens its own SQLite connection and wraps it with `contextlib.closing()`. Transaction context management provides commit and rollback behavior, while `closing()` guarantees that the underlying connection is closed after the operation. This prevents connection and file-descriptor leaks during repeated webhook processing.
+
 For a production system with multiple application instances, a shared durable database or message-processing system would be required to provide deduplication across instances.
 
 ## 4. Security Trade-offs
@@ -141,3 +143,74 @@ The service also validates event types and webhook actions before persistence.
 A temporary Cloudflare Tunnel is used only for local webhook demonstration. The tunnel provides a public HTTPS endpoint for GitHub while the FastAPI application continues to run locally.
 
 In a production deployment, a stable HTTPS endpoint, centralized secret management, durable distributed storage, and stronger operational monitoring would be preferred.
+
+## 5. Conditional GET and ETag Strategy
+
+The `GET /issues/{number}` endpoint supports HTTP conditional requests using the `ETag` and `If-None-Match` headers.
+
+When GitHub returns an `ETag`, the gateway forwards it to its client. A client may include that value in a later `If-None-Match` request header. The gateway forwards the conditional header to GitHub rather than generating its own entity tag.
+
+If GitHub determines that the issue has not changed, it returns HTTP 304. The gateway preserves this status and returns:
+
+- HTTP `304 Not Modified`
+- the current `ETag` header when available
+- no response body
+
+If the resource has changed, the gateway returns HTTP 200 with the current issue representation and the latest `ETag`.
+
+Passing through GitHub's entity tag keeps the gateway consistent with the authoritative upstream resource and avoids maintaining a separate cache-validation algorithm. The conditional request still contacts GitHub, but it can avoid transferring and processing an unchanged response body.
+
+## 6. OpenAPI Contract Strategy
+
+The running FastAPI application is treated as the source of truth for the OpenAPI contract.
+
+Request and response models are defined using reusable Pydantic schemas. Route metadata defines success responses, structured error responses, headers, and representative examples.
+
+FastAPI normally documents request validation failures as HTTP 422. This gateway converts `RequestValidationError` into HTTP 400 to satisfy the assignment contract. A custom OpenAPI function therefore removes the automatic 422 responses and their unused validation schemas from the runtime contract.
+
+The following command regenerates both committed contract formats:
+
+```bash
+make openapi
+```
+
+This produces:
+
+```text
+openapi.json
+openapi.yaml
+```
+
+The CI workflow regenerates the contract and checks that `openapi.yaml` remains identical to the runtime schema. This prevents the static documentation from drifting away from actual application behavior.
+
+## 7. Testing and Continuous Integration Strategy
+
+The test suite separates isolated unit tests from the real GitHub integration test.
+
+Unit tests mock GitHub HTTP responses and cover:
+
+- issue CRUD and comment operations
+- error translation and rate-limit handling
+- pagination
+- conditional ETag requests
+- HMAC verification
+- webhook validation and idempotency
+- SQLite persistence
+- OpenAPI behavior
+- request observability
+
+The current unit suite contains 45 tests and achieves 95.21% line coverage. The automated coverage gate requires at least 80%.
+
+The real GitHub integration test is opt-in because it creates and modifies issues and comments in the dedicated test repository. Keeping it disabled during normal test and CI execution prevents unintended external side effects.
+
+GitHub Actions runs the following quality checks for pushes and pull requests targeting `main`:
+
+1. Install dependencies.
+2. Run Ruff lint and formatting checks.
+3. Run the unit tests.
+4. Enforce the coverage threshold.
+5. Regenerate and verify the OpenAPI contract.
+6. Check for unique operation IDs and undocumented HTTP 422 responses.
+7. Build the Docker image.
+
+The workflow uses non-sensitive test configuration for unit tests and does not require production GitHub credentials.
