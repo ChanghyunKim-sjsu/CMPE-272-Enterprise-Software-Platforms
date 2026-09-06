@@ -7,7 +7,7 @@ paths:
     get:
       summary: Get Issue Endpoint
       description: Return a single issue by issue number.
-      operationId: get_issue_endpoint_issues__number__get
+      operationId: get_issue
       parameters:
       - name: number
         in: path
@@ -17,33 +17,65 @@ paths:
           title: Number
       responses:
         '200':
-          description: Successful Response
+          description: Issue returned successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IssueResponse'
+              example:
+                number: 4
+                html_url: https://github.com/ChanghyunKim-sjsu/CMPE-272-issues-test/issues/4
+                state: open
+                title: Example issue
+                body: Created through the CMPE 272 Issues Gateway.
+                labels:
+                - bug
+                created_at: '2026-09-05T20:15:00Z'
+                updated_at: '2026-09-05T20:15:00Z'
+        '400':
+          description: Invalid issue number
+          content:
+            application/json:
+              example:
+                error: validation_error
+                message: Invalid request
+                status_code: 400
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: GitHub authentication failed
+          content:
+            application/json:
+              example:
+                error: github_api_error
+                message: Bad credentials
+                status_code: 401
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Issue not found
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: github_api_error
-                message: Not Found
+                message: Issue not found
                 status_code: 404
-        '422':
-          description: Validation Error
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: GitHub API rate limit exceeded
           content:
             application/json:
+              example:
+                error: github_api_error
+                message: GitHub API rate limit exceeded
+                status_code: 429
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - GitHubBearer: []
+                $ref: '#/components/schemas/ErrorResponse'
     patch:
       summary: Update Issue Endpoint
       description: Update an existing issue.
-      operationId: update_issue_endpoint_issues__number__patch
+      operationId: update_issue
       parameters:
       - name: number
         in: path
@@ -59,36 +91,66 @@ paths:
               $ref: '#/components/schemas/IssueUpdate'
       responses:
         '200':
-          description: Successful Response
+          description: Issue updated successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IssueResponse'
+              example:
+                number: 4
+                html_url: https://github.com/ChanghyunKim-sjsu/CMPE-272-issues-test/issues/4
+                state: open
+                title: Example issue
+                body: Created through the CMPE 272 Issues Gateway.
+                labels:
+                - bug
+                created_at: '2026-09-05T20:15:00Z'
+                updated_at: '2026-09-05T20:15:00Z'
         '400':
           description: Invalid issue update payload
           content:
             application/json:
+              example:
+                error: validation_error
+                message: Invalid request
+                status_code: 400
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: GitHub authentication failed
+          content:
+            application/json:
+              example:
+                error: github_api_error
+                message: Bad credentials
+                status_code: 401
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Issue not found
           content:
             application/json:
+              example:
+                error: github_api_error
+                message: Issue not found
+                status_code: 404
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          description: Validation Error
+        '429':
+          description: GitHub API rate limit exceeded
           content:
             application/json:
+              example:
+                error: github_api_error
+                message: GitHub API rate limit exceeded
+                status_code: 429
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - GitHubBearer: []
+                $ref: '#/components/schemas/ErrorResponse'
   /issues:
     get:
       summary: List Issues Endpoint
       description: Return issues from the configured GitHub repository.
-      operationId: list_issues_endpoint_issues_get
+      operationId: list_issues
       parameters:
       - name: state
         in: query
@@ -128,36 +190,67 @@ paths:
           title: Per Page
       responses:
         '200':
-          description: Successful Response
+          description: Issues returned successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/IssueResponse'
-                title: Response List Issues Endpoint Issues Get
+                title: Response List Issues
+              example:
+              - number: 4
+                html_url: https://github.com/ChanghyunKim-sjsu/CMPE-272-issues-test/issues/4
+                state: open
+                title: Example issue
+                body: Created through the CMPE 272 Issues Gateway.
+                labels:
+                - bug
+                created_at: '2026-09-05T20:15:00Z'
+                updated_at: '2026-09-05T20:15:00Z'
           headers:
             Link:
-              description: GitHub pagination links such as next, previous, first,
-                and last.
+              description: GitHub pagination links
               schema:
                 type: string
             X-Request-ID:
-              description: Request tracing identifier.
+              description: Request correlation identifier
               schema:
                 type: string
-        '422':
-          description: Validation Error
+        '400':
+          description: Invalid query parameters
           content:
             application/json:
+              example:
+                error: validation_error
+                message: Invalid request
+                status_code: 400
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - GitHubBearer: []
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: GitHub authentication failed
+          content:
+            application/json:
+              example:
+                error: github_api_error
+                message: Bad credentials
+                status_code: 401
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: GitHub API rate limit exceeded
+          content:
+            application/json:
+              example:
+                error: github_api_error
+                message: GitHub API rate limit exceeded
+                status_code: 429
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       summary: Create Issue Endpoint
       description: Create a new issue in the configured GitHub repository.
-      operationId: create_issue_endpoint_issues_post
+      operationId: create_issue
       requestBody:
         required: true
         content:
@@ -166,54 +259,61 @@ paths:
               $ref: '#/components/schemas/IssueCreate'
       responses:
         '201':
-          description: Successful Response
+          description: Issue created successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IssueResponse'
               example:
                 number: 4
-                html_url: https://github.com/example/repository/issues/4
+                html_url: https://github.com/ChanghyunKim-sjsu/CMPE-272-issues-test/issues/4
                 state: open
                 title: Example issue
-                body: Example issue body.
+                body: Created through the CMPE 272 Issues Gateway.
                 labels:
                 - bug
-                created_at: '2026-09-05T20:00:00Z'
-                updated_at: '2026-09-05T20:00:00Z'
+                created_at: '2026-09-05T20:15:00Z'
+                updated_at: '2026-09-05T20:15:00Z'
+          headers:
+            Location:
+              description: Location of the newly created issue
+              schema:
+                type: string
         '400':
           description: Invalid issue payload
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: validation_error
-                message: Invalid request.
+                message: Invalid request
                 status_code: 400
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: GitHub authentication failed
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: github_api_error
                 message: Bad credentials
                 status_code: 401
-        '422':
-          description: Validation Error
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: GitHub API rate limit exceeded
           content:
             application/json:
+              example:
+                error: github_api_error
+                message: GitHub API rate limit exceeded
+                status_code: 429
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - GitHubBearer: []
+                $ref: '#/components/schemas/ErrorResponse'
   /issues/{number}/comments:
     post:
       summary: Create Comment Endpoint
       description: Create a comment on an existing issue.
-      operationId: create_comment_endpoint_issues__number__comments_post
+      operationId: create_issue_comment
       parameters:
       - name: number
         in: path
@@ -229,23 +329,61 @@ paths:
               $ref: '#/components/schemas/CommentCreate'
       responses:
         '201':
-          description: Successful Response
+          description: Comment created successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommentResponse'
-        '422':
-          description: Validation Error
+              example:
+                id: 123456789
+                body: This comment was created through the Issues Gateway.
+                user: ChanghyunKim-sjsu
+                created_at: '2026-09-05T20:20:00Z'
+                html_url: https://github.com/ChanghyunKim-sjsu/CMPE-272-issues-test/issues/4#issuecomment-123456789
+        '400':
+          description: Invalid comment payload
           content:
             application/json:
+              example:
+                error: validation_error
+                message: Invalid request
+                status_code: 400
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - GitHubBearer: []
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: GitHub authentication failed
+          content:
+            application/json:
+              example:
+                error: github_api_error
+                message: Bad credentials
+                status_code: 401
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              example:
+                error: github_api_error
+                message: Issue not found
+                status_code: 404
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: GitHub API rate limit exceeded
+          content:
+            application/json:
+              example:
+                error: github_api_error
+                message: GitHub API rate limit exceeded
+                status_code: 429
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     get:
       summary: List Comments Endpoint
       description: Return comments for an existing issue.
-      operationId: list_comments_endpoint_issues__number__comments_get
+      operationId: list_issue_comments
       parameters:
       - name: number
         in: path
@@ -255,53 +393,146 @@ paths:
           title: Number
       responses:
         '200':
-          description: Successful Response
+          description: Issue comments returned successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/CommentResponse'
-                title: Response List Comments Endpoint Issues  Number  Comments Get
-        '422':
-          description: Validation Error
+                title: Response List Issue Comments
+              example:
+              - id: 123456789
+                body: This comment was created through the Issues Gateway.
+                user: ChanghyunKim-sjsu
+                created_at: '2026-09-05T20:20:00Z'
+                html_url: https://github.com/ChanghyunKim-sjsu/CMPE-272-issues-test/issues/4#issuecomment-123456789
+        '400':
+          description: Invalid issue number
           content:
             application/json:
+              example:
+                error: validation_error
+                message: Invalid request
+                status_code: 400
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - GitHubBearer: []
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: GitHub authentication failed
+          content:
+            application/json:
+              example:
+                error: github_api_error
+                message: Bad credentials
+                status_code: 401
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Issue not found
+          content:
+            application/json:
+              example:
+                error: github_api_error
+                message: Issue not found
+                status_code: 404
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: GitHub API rate limit exceeded
+          content:
+            application/json:
+              example:
+                error: github_api_error
+                message: GitHub API rate limit exceeded
+                status_code: 429
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /webhook:
     post:
       summary: Github Webhook
-      description: Receives GitHub issues, issue_comment, and ping events. The X-Hub-Signature-256
-        header is verified using HMAC SHA-256 and WEBHOOK_SECRET. Successful deliveries
-        return HTTP 204.
-      operationId: github_webhook_webhook_post
+      description: Receive and validate GitHub webhook deliveries.
+      operationId: receive_github_webhook
       responses:
         '204':
-          description: Successful Response
+          description: Webhook delivery accepted and processed successfully
+        '400':
+          description: Invalid or unsupported webhook delivery
+          content:
+            application/json:
+              examples:
+                unsupported_event:
+                  summary: Unsupported GitHub event
+                  value:
+                    error: unsupported_event
+                    message: Unsupported GitHub webhook event.
+                    status_code: 400
+                invalid_payload:
+                  summary: Invalid JSON payload
+                  value:
+                    error: invalid_payload
+                    message: Webhook payload is not valid JSON.
+                    status_code: 400
+                unsupported_action:
+                  summary: Unsupported webhook action
+                  value:
+                    error: unsupported_action
+                    message: Unsupported action 'unknown' for event 'issues'.
+                    status_code: 400
+                missing_delivery_id:
+                  summary: Missing delivery ID
+                  value:
+                    error: missing_delivery_id
+                    message: X-GitHub-Delivery header is required.
+                    status_code: 400
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Invalid webhook signature
+          description: Webhook signature validation failed
           content:
             application/json:
               example:
                 error: invalid_signature
                 message: Webhook signature validation failed.
                 status_code: 401
-        '400':
-          description: Unsupported event, action, or invalid payload
-          content:
-            application/json:
-              example:
-                error: unsupported_event
-                message: Unsupported GitHub webhook event.
-                status_code: 400
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      parameters:
+      - name: X-Hub-Signature-256
+        in: header
+        required: true
+        description: GitHub HMAC SHA-256 signature used to verify the webhook payload.
+        schema:
+          type: string
+          example: sha256=<signature>
+      - name: X-GitHub-Event
+        in: header
+        required: true
+        description: GitHub webhook event type, such as issues, issue_comment, or
+          ping.
+        schema:
+          type: string
+          example: issues
+      - name: X-GitHub-Delivery
+        in: header
+        required: false
+        description: Unique GitHub delivery identifier. Required for issues and issue_comment
+          events and used for idempotent event storage.
+        schema:
+          type: string
+          example: 12345678-abcd-1234-abcd-123456789abc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              action: opened
+              issue:
+                number: 4
   /events:
     get:
       summary: Get Events
       description: Return recently processed webhook events.
-      operationId: get_events_events_get
+      operationId: list_webhook_events
       parameters:
       - name: limit
         in: query
@@ -314,31 +545,43 @@ paths:
           title: Limit
       responses:
         '200':
-          description: Successful Response
+          description: Webhook events returned successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/WebhookEventResponse'
-                title: Response Get Events Events Get
-        '422':
-          description: Validation Error
+                title: Response List Webhook Events
+              example:
+              - id: 1
+                event: issues
+                action: opened
+                issue_number: 4
+                timestamp: '2026-09-05T20:25:00Z'
+        '400':
+          description: Invalid limit query parameter
           content:
             application/json:
+              example:
+                error: validation_error
+                message: Input should be less than or equal to 100
+                status_code: 400
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/ErrorResponse'
   /healthz:
     get:
       summary: Health Check
       description: Return the health status of the service.
-      operationId: health_check_healthz_get
+      operationId: health_check
       responses:
         '200':
-          description: Successful Response
+          description: Service is healthy
           content:
             application/json:
               schema: {}
+              example:
+                status: ok
 components:
   schemas:
     CommentCreate:
@@ -352,6 +595,8 @@ components:
       - body
       title: CommentCreate
       description: Request model for creating an issue comment.
+      examples:
+      - body: This comment was created through the Issues Gateway.
     CommentResponse:
       properties:
         id:
@@ -379,6 +624,12 @@ components:
       - html_url
       title: CommentResponse
       description: Response model for an issue comment.
+      examples:
+      - body: This comment was created through the Issues Gateway.
+        created_at: '2026-09-05T20:20:00Z'
+        html_url: https://github.com/ChanghyunKim-sjsu/CMPE-272-issues-test/issues/4#issuecomment-123456789
+        id: 123456789
+        user: ChanghyunKim-sjsu
     ErrorResponse:
       properties:
         error:
@@ -397,15 +648,10 @@ components:
       - status_code
       title: ErrorResponse
       description: Standard error response returned by the API.
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
+      examples:
+      - error: github_api_error
+        message: Issue not found
+        status_code: 404
     IssueCreate:
       properties:
         title:
@@ -427,6 +673,12 @@ components:
       - title
       title: IssueCreate
       description: Request model for creating a GitHub issue.
+      examples:
+      - body: Created through the CMPE 272 Issues Gateway.
+        labels:
+        - bug
+        - assignment
+        title: Example issue
     IssueResponse:
       properties:
         number:
@@ -474,6 +726,16 @@ components:
       - updated_at
       title: IssueResponse
       description: Response model returned by the Issues Gateway.
+      examples:
+      - body: Created through the CMPE 272 Issues Gateway.
+        created_at: '2026-09-05T20:15:00Z'
+        html_url: https://github.com/ChanghyunKim-sjsu/CMPE-272-issues-test/issues/4
+        labels:
+        - bug
+        number: 4
+        state: open
+        title: Example issue
+        updated_at: '2026-09-05T20:15:00Z'
     IssueUpdate:
       properties:
         title:
@@ -498,32 +760,10 @@ components:
       type: object
       title: IssueUpdate
       description: Request model for updating a GitHub issue.
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-        input:
-          title: Input
-        ctx:
-          type: object
-          title: Context
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
+      examples:
+      - body: The issue body has been updated.
+        state: open
+        title: Updated issue title
     WebhookEventResponse:
       properties:
         id:
@@ -553,9 +793,9 @@ components:
       - timestamp
       title: WebhookEventResponse
       description: Response model for a processed webhook event.
-  securitySchemes:
-    GitHubBearer:
-      type: http
-      scheme: bearer
-      description: Represents the server-side GitHub credential configured through
-        GITHUB_TOKEN. The gateway uses this credential when calling GitHub.
+      examples:
+      - action: opened
+        event: issues
+        id: 1
+        issue_number: 4
+        timestamp: '2026-09-05T20:25:00Z'

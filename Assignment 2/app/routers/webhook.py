@@ -12,9 +12,9 @@ import json
 from fastapi import APIRouter, Request, Response, status
 from fastapi.responses import JSONResponse
 
-from app.webhook import verify_webhook_signature
-
 from app.event_store import save_event
+from app.schemas import ErrorResponse
+from app.webhook import verify_webhook_signature
 
 
 router = APIRouter()
@@ -51,6 +51,137 @@ ALLOWED_ACTIONS = {
 @router.post(
     "/webhook",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="receive_github_webhook",
+    responses={
+        204: {
+            "description": (
+                "Webhook delivery accepted and processed successfully"
+            ),
+        },
+        400: {
+            "model": ErrorResponse,
+            "description": "Invalid or unsupported webhook delivery",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "unsupported_event": {
+                            "summary": "Unsupported GitHub event",
+                            "value": {
+                                "error": "unsupported_event",
+                                "message": (
+                                    "Unsupported GitHub webhook event."
+                                ),
+                                "status_code": 400,
+                            },
+                        },
+                        "invalid_payload": {
+                            "summary": "Invalid JSON payload",
+                            "value": {
+                                "error": "invalid_payload",
+                                "message": (
+                                    "Webhook payload is not valid JSON."
+                                ),
+                                "status_code": 400,
+                            },
+                        },
+                        "unsupported_action": {
+                            "summary": "Unsupported webhook action",
+                            "value": {
+                                "error": "unsupported_action",
+                                "message": (
+                                    "Unsupported action 'unknown' "
+                                    "for event 'issues'."
+                                ),
+                                "status_code": 400,
+                            },
+                        },
+                        "missing_delivery_id": {
+                            "summary": "Missing delivery ID",
+                            "value": {
+                                "error": "missing_delivery_id",
+                                "message": (
+                                    "X-GitHub-Delivery header is required."
+                                ),
+                                "status_code": 400,
+                            },
+                        },
+                    }
+                }
+            },
+        },
+        401: {
+            "model": ErrorResponse,
+            "description": "Webhook signature validation failed",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": "invalid_signature",
+                        "message": (
+                            "Webhook signature validation failed."
+                        ),
+                        "status_code": 401,
+                    }
+                }
+            },
+        },
+    },
+    openapi_extra={
+        "parameters": [
+            {
+                "name": "X-Hub-Signature-256",
+                "in": "header",
+                "required": True,
+                "description": (
+                    "GitHub HMAC SHA-256 signature used to verify "
+                    "the webhook payload."
+                ),
+                "schema": {
+                    "type": "string",
+                    "example": "sha256=<signature>",
+                },
+            },
+            {
+                "name": "X-GitHub-Event",
+                "in": "header",
+                "required": True,
+                "description": (
+                    "GitHub webhook event type, such as issues, "
+                    "issue_comment, or ping."
+                ),
+                "schema": {
+                    "type": "string",
+                    "example": "issues",
+                },
+            },
+            {
+                "name": "X-GitHub-Delivery",
+                "in": "header",
+                "required": False,
+                "description": (
+                    "Unique GitHub delivery identifier. Required for "
+                    "issues and issue_comment events and used for "
+                    "idempotent event storage."
+                ),
+                "schema": {
+                    "type": "string",
+                    "example": "12345678-abcd-1234-abcd-123456789abc",
+                },
+            },
+        ],
+        "requestBody": {
+            "required": True,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "action": "opened",
+                        "issue": {
+                            "number": 4,
+                        },
+                    }
+                }
+            },
+        },
+    },
 )
 async def github_webhook(request: Request):
     """Receive and validate GitHub webhook deliveries."""
@@ -102,7 +233,10 @@ async def github_webhook(request: Request):
             status_code=400,
             content={
                 "error": "unsupported_action",
-                "message": f"Unsupported action '{action}' for event '{event}'.",
+                "message": (
+                    f"Unsupported action '{action}' "
+                    f"for event '{event}'."
+                ),
                 "status_code": 400,
             },
         )

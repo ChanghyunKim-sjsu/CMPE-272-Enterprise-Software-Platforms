@@ -9,6 +9,7 @@ Description: Stores processed GitHub webhook deliveries in SQLite.
 
 import sqlite3
 from datetime import datetime, timezone
+from contextlib import closing
 
 
 DATABASE_PATH = "webhook_events.db"
@@ -78,7 +79,7 @@ def save_event(
 def list_events(limit: int = 20):
     """Return the most recently processed webhook events."""
 
-    with sqlite3.connect(DATABASE_PATH) as connection:
+    with closing(sqlite3.connect(DATABASE_PATH)) as connection:
         connection.row_factory = sqlite3.Row
 
         rows = connection.execute(

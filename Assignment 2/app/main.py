@@ -129,7 +129,70 @@ async def validation_error_handler(
         },
     )
 
-@app.get("/healthz")
+@app.get(
+    "/healthz",
+    operation_id="health_check",
+    responses={
+        200: {
+            "description": "Service is healthy",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "ok",
+                    }
+                }
+            },
+        }
+    },
+)
 def health_check():
     """Return the health status of the service."""
+
     return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Custom OpenAPI
+# ---------------------------------------------------------------------------
+
+original_openapi = app.openapi
+
+
+def custom_openapi():
+    """Keep the OpenAPI contract aligned with actual API behavior.
+
+    FastAPI documents request validation errors as HTTP 422 by default.
+    This application converts RequestValidationError responses to HTTP 400,
+    so the automatically generated 422 responses are removed from the
+    runtime OpenAPI schema.
+
+    Author: Changhyun Kim
+    """
+
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = original_openapi()
+
+    for path_item in openapi_schema.get("paths", {}).values():
+        for operation in path_item.values():
+            if not isinstance(operation, dict):
+                continue
+
+            responses = operation.get("responses", {})
+            responses.pop("422", None)
+
+    schemas = (
+        openapi_schema
+        .get("components", {})
+        .get("schemas", {})
+    )
+
+    schemas.pop("HTTPValidationError", None)
+    schemas.pop("ValidationError", None)
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
