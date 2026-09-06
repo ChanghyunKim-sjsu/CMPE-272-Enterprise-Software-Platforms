@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,6 +17,10 @@ jobs:
     name: Lint, Test, OpenAPI, Docker
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: "Assignment 2"
+
     env:
       GITHUB_TOKEN: test-token
       GITHUB_OWNER: test-owner
@@ -24,16 +29,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
           cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
+            Assignment 2/requirements.txt
+            Assignment 2/requirements-dev.txt
 
       - name: Install dependencies
         run: |
@@ -63,9 +68,7 @@ jobs:
           with open("openapi.yaml", encoding="utf-8") as file:
               static_schema = yaml.safe_load(file)
 
-          assert runtime_schema == static_schema, (
-              "Runtime OpenAPI and openapi.yaml do not match"
-          )
+          assert runtime_schema == static_schema
 
           operation_ids = []
 
@@ -77,9 +80,7 @@ jobs:
                   ):
                       operation_ids.append(operation["operationId"])
 
-          assert len(operation_ids) == len(set(operation_ids)), (
-              "Duplicate OpenAPI operation IDs found"
-          )
+          assert len(operation_ids) == len(set(operation_ids))
 
           for path_item in runtime_schema["paths"].values():
               for operation in path_item.values():
@@ -87,9 +88,7 @@ jobs:
                       continue
 
                   responses = operation.get("responses", {})
-                  assert "422" not in responses, (
-                      "Unexpected FastAPI 422 response found"
-                  )
+                  assert "422" not in responses
 
           print("Runtime OpenAPI matches openapi.yaml")
           print("Operation IDs are unique")
