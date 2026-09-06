@@ -1,33 +1,50 @@
 # Assignment 2 - GitHub Issues Gateway
 
-## CMPE 272 - Enterprise Software Platforms
+CMPE 272 - Enterprise Software Platforms
 
-This project implements a small REST API service that wraps the GitHub REST API for managing issues and comments in a GitHub repository.
+Author: Changhyun Kim
 
-The service will include:
+## Overview
 
-- Issue CRUD operations
-- Issue comments
-- GitHub webhook handling
+This project implements a FastAPI service that wraps the GitHub REST API
+for issue management in a dedicated test repository.
+
+The service supports:
+
+- Creating GitHub issues
+- Listing issues with pagination
+- Retrieving a single issue
+- Updating, closing, and reopening issues
+- Creating and retrieving issue comments
+- Receiving GitHub webhooks
 - HMAC SHA-256 webhook signature verification
+- Webhook persistence and deduplication using SQLite
+- Structured error responses
+- Request IDs and structured logging
 - OpenAPI 3.1 documentation
-- Unit and integration tests
-- Docker support
-- Health check and structured logging
+- Unit and integration testing
+- Docker deployment
 
-## Technology Stack
+## Project Structure
 
-- Python
-- FastAPI
-- GitHub REST API
-- SQLite
-- Pytest
-- Docker
-
-## Author
-
-Changhyun Kim
-
-## Project Status
-
-In Progress
+```text
+Assignment 2/
+├── app/
+│   ├── routers/
+│   ├── config.py
+│   ├── errors.py
+│   ├── event_store.py
+│   ├── github_client.py
+│   ├── main.py
+│   ├── pagination.py
+│   ├── schemas.py
+│   └── webhook.py
+├── tests/
+│   ├── unit/
+│   └── integration/
+├── Dockerfile
+├── .dockerignore
+├── .env.example
+├── openapi.yaml
+├── requirements.txt
+└── README.md
